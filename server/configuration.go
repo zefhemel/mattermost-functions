@@ -18,6 +18,13 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
+	AccessToken string
+	ConfigBlob  []EventDef
+}
+
+type EventDef struct {
+	Event string `json:"event"`
+	Code  string `json:"code"`
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
