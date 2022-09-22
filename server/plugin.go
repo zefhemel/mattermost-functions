@@ -23,7 +23,7 @@ type Plugin struct {
 	configuration *configuration
 }
 
-type DenoConfig struct {
+type InitObject struct {
 	AccessToken string `json:"api_token"`
 	ApiURL      string `json:"api_url"`
 }
@@ -36,8 +36,14 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	}
 	ctx := context.Background()
 	eventName := r.URL.Path[1:]
-	fmt.Println("Event name:", eventName)
-	fmt.Println("Config blob", p.configuration.ConfigBlob)
+	mattermostUrl := "http://localhost:8065"
+	siteUrl := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteUrl != nil {
+		mattermostUrl = *siteUrl
+	}
+
+	// fmt.Println("Event name:", eventName)
+	// fmt.Println("Config blob", p.configuration.ConfigBlob)
 	var event any
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
 		fmt.Println("Error unmarshalling event:", err)
@@ -45,12 +51,12 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	}
 	for _, eventDef := range p.configuration.ConfigBlob {
 		if eventDef.Event == eventName {
-			fmt.Println("Found event definition:", eventDef)
+			// fmt.Println("Found event definition:", eventDef)
 			fn, err := denorunner.NewDenoFunctionInstance(ctx, cfg, func(message string) {
 				fmt.Println("[Deno]", message)
-			}, DenoConfig{
+			}, InitObject{
 				AccessToken: p.configuration.AccessToken,
-				ApiURL:      "http://localhost:8065",
+				ApiURL:      mattermostUrl,
 			}, eventDef.Code)
 
 			if err != nil {
@@ -58,12 +64,15 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 				return
 			}
 
+			defer fn.Close()
+
 			if _, err := fn.Invoke(ctx, event); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, "Error invoking function: %v", err)
 				fmt.Println("Error in deno", err)
 				return
 			}
 
-			fn.Close()
 		}
 	}
 
