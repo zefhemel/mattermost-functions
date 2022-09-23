@@ -21,6 +21,7 @@ function EditorComp({
         extensions: [
           basicSetup,
           keymap.of([indentWithTab]),
+          javascript(),
           ViewPlugin.fromClass(
             class {
               update(update: ViewUpdate): void {
