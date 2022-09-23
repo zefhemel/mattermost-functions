@@ -19,7 +19,7 @@ function FunctionConfiguration(props: any) {
       let eventReq = await fetch("/api/v4/system/events/topics");
       if (eventReq.ok) {
         let events = await eventReq.json();
-        setAllEvents([...events, { topic: "test", description: "test" }]);
+        setAllEvents(events);
       }
     });
   }, []);
