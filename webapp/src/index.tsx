@@ -1,5 +1,42 @@
-import { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import manifest from "./manifest";
+
+import { basicSetup, EditorView } from "codemirror";
+import { javascript } from "@codemirror/lang-javascript";
+import { ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
+
+function EditorComp({
+  code,
+  onChange,
+}: {
+  code: string;
+  onChange: (code: string) => void;
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (editorRef.current) {
+      new EditorView({
+        doc: code,
+        extensions: [
+          basicSetup,
+          keymap.of([indentWithTab]),
+          ViewPlugin.fromClass(
+            class {
+              update(update: ViewUpdate): void {
+                if (update.docChanged) {
+                  onChange(update.state.doc.toString());
+                }
+              }
+            }
+          ),
+        ],
+        parent: editorRef.current,
+      });
+    }
+  }, []);
+  return <div ref={editorRef}></div>;
+}
 
 type FunctionDef = {
   event: string;
@@ -38,22 +75,20 @@ function MyComponent(props: any) {
             />
           </div>
           <b>JavaScript code:</b>
-          <textarea
-            style={{ width: "100%", height: "250px" }}
-            value={def.code}
-            onChange={(ev) => {
+          <EditorComp
+            code={def.code}
+            onChange={(code) => {
               let newDefs = [
                 ...defs.map((d) =>
-                  d.event === def.event
-                    ? { event: d.event, code: ev.target.value }
-                    : d
+                  d.event === def.event ? { event: d.event, code: code } : d
                 ),
               ];
               props.onChange(props.id, newDefs);
               props.setSaveNeeded();
               setDefs(newDefs);
             }}
-          />
+          ></EditorComp>
+
           <button
             onClick={() => {
               let newDefs = defs.filter((d) => d.event !== def.event);
