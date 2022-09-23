@@ -20,7 +20,6 @@
     "bundle_path": "webapp/dist/main.js"
   },
   "settings_schema": {
-    "header": "Here you can configure cool Functions stuff",
     "settings": [
       {
         "display_name": "API Access Token",

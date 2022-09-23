@@ -61,7 +61,7 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 
 			if err != nil {
 				fmt.Println(err)
-				return
+				continue
 			}
 
 			defer fn.Close()
@@ -70,9 +70,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprintf(w, "Error invoking function: %v", err)
 				fmt.Println("Error in deno", err)
-				return
+				continue
 			}
-
 		}
 	}
 
