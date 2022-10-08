@@ -2,10 +2,8 @@ module github.com/zefhemel/mattermost-functions
 
 go 1.18
 
-replace github.com/mattermost/mattermost-server/v6 => ../../go/src/github.com/mattermost/mattermost-server
-
 require (
-	github.com/mattermost/mattermost-server/v6 v6.0.0-20221008050148-7c33a1ff2448
+	github.com/mattermost/mattermost-server/v6 v6.0.0-20221008054102-e0fb03ddf67c
 	github.com/pkg/errors v0.9.1
 )
 
