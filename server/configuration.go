@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 
+	"github.com/mattermost/mattermost-server/v6/plugin/eventbus_helper"
+	"github.com/mattermost/mattermost-server/v6/shared/eventbus"
 	"github.com/pkg/errors"
 )
 
@@ -72,7 +75,33 @@ func (p *Plugin) setConfiguration(configuration *configuration) {
 		panic("setConfiguration called with the existing configuration")
 	}
 
+	// unsubscribe from all events as we get the config blob again
+	// will register handlers again in the next step
+	if p.configuration != nil {
+		for id := range p.handleFuncs {
+			p.API.LogInfo("unsubscribing from event", "id", id)
+			eventbus_helper.UnsubscribeFromEvent(p.API, id)
+			delete(p.handleFuncs, id)
+		}
+	}
+
+	if p.handleFuncs == nil {
+		p.handleFuncs = map[string]string{}
+	}
 	p.configuration = configuration
+
+	for _, eventDef := range p.configuration.ConfigBlob {
+		// we assign a dummy handler because we handle this event in deno
+		id, err := eventbus_helper.SubscribeToEvent(p.API, eventDef.Event, func(ev eventbus.Event) error { return nil })
+		if err != nil {
+			p.API.LogError(fmt.Sprintf("failed to subscribe to post_created event: %s", err))
+			return
+		}
+
+		p.handleFuncs[id] = eventDef.Code
+
+		p.API.LogInfo("subscribed to event: " + eventDef.Event + " with id: " + id)
+	}
 }
 
 // OnConfigurationChange is invoked when configuration changes may have been made.

@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
 
 	"github.com/mattermost/mattermost-server/v6/plugin"
+	"github.com/mattermost/mattermost-server/v6/plugin/eventbus_helper"
+	"github.com/mattermost/mattermost-server/v6/shared/eventbus"
+	"github.com/mattermost/mattermost-server/v6/shared/mlog"
 	"github.com/zefhemel/mattermost-functions/server/denorunner"
 )
 
@@ -21,6 +22,8 @@ type Plugin struct {
 	// configuration is the active plugin configuration. Consult getConfiguration and
 	// setConfiguration for usage.
 	configuration *configuration
+
+	handleFuncs map[string]string
 }
 
 type InitObject struct {
@@ -28,52 +31,54 @@ type InitObject struct {
 	ApiURL      string `json:"api_url"`
 }
 
-// ServeHTTP demonstrates a plugin that handles HTTP requests by greeting the world.
-func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
+func (p *Plugin) OnActivate() error {
+	return nil
+}
+
+func (p *Plugin) OnDeactivate() error {
+	p.API.LogInfo("deactivating plugin")
+	for id := range p.handleFuncs {
+		p.API.LogInfo("unsubscribing from event", "id", id)
+		eventbus_helper.UnsubscribeFromEvent(p.API, id)
+	}
+
+	return nil
+}
+
+func (p *Plugin) OnPluginReceiveEvent(handlerId string, ev eventbus.Event) {
+	denoCode, ok := p.handleFuncs[handlerId]
+	if !ok {
+		return // we don't have any handlers for this event
+	}
+
 	cfg := &denorunner.Config{
 		WorkDir:  ".",
 		DenoPath: "deno",
 	}
-	ctx := context.Background()
-	eventName := r.URL.Path[1:]
+
 	mattermostUrl := "http://localhost:8065"
 	siteUrl := p.API.GetConfig().ServiceSettings.SiteURL
 	if siteUrl != nil {
 		mattermostUrl = *siteUrl
 	}
 
-	// fmt.Println("Event name:", eventName)
-	// fmt.Println("Config blob", p.configuration.ConfigBlob)
-	var event any
-	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		fmt.Println("Error unmarshalling event:", err)
+	ctx := context.Background()
+
+	fn, err := denorunner.NewDenoFunctionInstance(ctx, cfg, func(message string) {
+		fmt.Println("[Deno]", message)
+	}, InitObject{
+		AccessToken: p.configuration.AccessToken,
+		ApiURL:      mattermostUrl,
+	}, denoCode)
+
+	if err != nil {
+		p.API.LogError("Error in deno", mlog.Err(err))
 		return
 	}
-	for _, eventDef := range p.configuration.ConfigBlob {
-		if eventDef.Event == eventName {
-			// fmt.Println("Found event definition:", eventDef)
-			fn, err := denorunner.NewDenoFunctionInstance(ctx, cfg, func(message string) {
-				fmt.Println("[Deno]", message)
-			}, InitObject{
-				AccessToken: p.configuration.AccessToken,
-				ApiURL:      mattermostUrl,
-			}, eventDef.Code)
+	defer fn.Close()
 
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			defer fn.Close()
-
-			if _, err := fn.Invoke(ctx, event); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, "Error invoking function: %v", err)
-				fmt.Println("Error in deno", err)
-				continue
-			}
-		}
+	if _, err := fn.Invoke(ctx, ev); err != nil {
+		p.API.LogError("Error in deno", mlog.Err(err))
+		return
 	}
-
-	fmt.Fprint(w, "OK")
 }
