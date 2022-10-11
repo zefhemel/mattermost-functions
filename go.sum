@@ -150,6 +150,8 @@ github.com/mattermost/mattermost-server/v6 v6.0.0-20221008050148-7c33a1ff2448 h1
 github.com/mattermost/mattermost-server/v6 v6.0.0-20221008050148-7c33a1ff2448/go.mod h1:fHX5dmUE4YzxYkQ7pA2a1w2KkVIY1rC26j5NfHzocSU=
 github.com/mattermost/mattermost-server/v6 v6.0.0-20221008054102-e0fb03ddf67c h1:DagYQT9ez2Rokww+wzl8PZxQEdN1I0hub5P3l56BApo=
 github.com/mattermost/mattermost-server/v6 v6.0.0-20221008054102-e0fb03ddf67c/go.mod h1:fHX5dmUE4YzxYkQ7pA2a1w2KkVIY1rC26j5NfHzocSU=
+github.com/mattermost/mattermost-server/v6 v6.0.0-20221008060513-f8ae2b54380e h1:dd9F1dHt+9eaZMHaEfvVPv4HdVpoc1jh9LLPG9YWQ0Y=
+github.com/mattermost/mattermost-server/v6 v6.0.0-20221008060513-f8ae2b54380e/go.mod h1:fHX5dmUE4YzxYkQ7pA2a1w2KkVIY1rC26j5NfHzocSU=
 github.com/mattn/go-colorable v0.1.9/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-colorable v0.1.12/go.mod h1:u5H1YNBxpqRaxsYJYSkiCWKzEfiAb1Gb520KVy5xxl4=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
