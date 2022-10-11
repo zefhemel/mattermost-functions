@@ -3,7 +3,7 @@ module github.com/zefhemel/mattermost-functions
 go 1.18
 
 require (
-	github.com/mattermost/mattermost-server/v6 v6.0.0-20221008054102-e0fb03ddf67c
+	github.com/mattermost/mattermost-server/v6 v6.0.0-20221008060513-f8ae2b54380e
 	github.com/pkg/errors v0.9.1
 )
 
